@@ -83,6 +83,7 @@ ON
 ORDER BY
   Supplier.Country DESC,
   Supplier.City DESC;
-```![изображение](https://user-images.githubusercontent.com/125894838/233708864-be610f6e-b321-4a56-9f51-8150df7d7bf6.png)
+```
+![изображение](https://user-images.githubusercontent.com/125894838/233708864-be610f6e-b321-4a56-9f51-8150df7d7bf6.png)
 
 
