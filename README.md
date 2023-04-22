@@ -78,12 +78,39 @@ FROM
     GROUP BY
       Product.SupplierId
   ) AS SupplierIdWithProductsCount
-ON
-  Supplier.Id = SupplierIdWithProductsCount.SupplierId
+  ON Supplier.Id = SupplierIdWithProductsCount.SupplierId
 ORDER BY
   Supplier.Country DESC,
   Supplier.City DESC;
 ```
 ![изображение](https://user-images.githubusercontent.com/125894838/233708864-be610f6e-b321-4a56-9f51-8150df7d7bf6.png)
 
-
+#
+#### 6 задание
+Первые 3 клиента, у которых заказы с наибольшим (не только максимальным) количеством позиций (вывести фамилию, имя клиента, номера заказов и количество позиций в них).
+```
+SELECT
+  Customer.LastName,
+  Customer.FirstName,
+  OrderNumber,
+  OrderItemsCount
+FROM
+  [Order]
+  JOIN (
+    SELECT TOP 3
+      OrderItem.OrderId AS OrderId,
+      COUNT(*) AS OrderItemsCount
+    FROM
+      OrderItem
+    GROUP BY
+      OrderItem.OrderId
+    ORDER BY
+      OrderItemsCount DESC
+  ) AS OrderNumberWithOrderItemsCount
+  ON
+    [Order].Id = OrderNumberWithOrderItemsCount.OrderId
+  JOIN Customer ON Customer.Id = [Order].CustomerId
+ORDER BY
+  OrderNumberWithOrderItemsCount.OrderItemsCount DESC
+```
+![изображение](https://user-images.githubusercontent.com/125894838/233807437-44a2e314-c2cd-4053-882c-b49a0c12f3ed.png)
