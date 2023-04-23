@@ -107,10 +107,70 @@ FROM
     ORDER BY
       OrderItemsCount DESC
   ) AS OrderNumberWithOrderItemsCount
-  ON
-    [Order].Id = OrderNumberWithOrderItemsCount.OrderId
+  ON [Order].Id = OrderNumberWithOrderItemsCount.OrderId
   JOIN Customer ON Customer.Id = [Order].CustomerId
 ORDER BY
   OrderNumberWithOrderItemsCount.OrderItemsCount DESC
 ```
 ![изображение](https://user-images.githubusercontent.com/125894838/233807437-44a2e314-c2cd-4053-882c-b49a0c12f3ed.png)
+
+#
+#### 7 задание
+Всех клиентов, которые работают с минимальным количеством поставщиков, и их заказы.
+```
+SELECT
+  Customer.*,
+  [Order].*,
+  CustomerIdWithSupliersCount.SuppliersCount
+FROM (
+  SELECT
+    [Order].CustomerId,
+    COUNT(*) AS SuppliersCount
+  FROM
+    [Order]
+    JOIN OrderItem ON [Order].Id = OrderItem.OrderId
+  GROUP BY
+    [Order].CustomerId
+) AS CustomerIdWithSupliersCount
+JOIN Customer ON CustomerIdWithSupliersCount.CustomerId = Customer.Id
+JOIN [Order] ON [Order].CustomerId = Customer.Id
+WHERE
+  CustomerIdWithSupliersCount.SuppliersCount = (
+    SELECT
+      MIN(CustomerSuppliersCount.SuppliersCount) AS MinSupliersCount
+    FROM (
+      SELECT
+        COUNT(*) AS SuppliersCount
+      FROM
+        [Order]
+        JOIN OrderItem ON [Order].Id = OrderItem.OrderId
+      GROUP BY
+        [Order].CustomerId
+    ) AS CustomerSuppliersCount
+  )
+```
+![изображение](https://user-images.githubusercontent.com/125894838/233857853-66de6861-3135-43db-aaa6-01afe37967a4.png)
+
+#
+#### 8 задание
+Количество различных продуктов по каждому клиенту. Вывести фамилию, имя клиента, количество продуктов.
+```
+SELECT
+  Customer.LastName,
+  Customer.FirstName,
+  CustomerIdWithUniqueProductsCount.UniqueProductsCount
+FROM
+  Customer
+  JOIN (
+    SELECT
+      [Order].CustomerId,
+      COUNT(DISTINCT OrderItem.ProductId) AS UniqueProductsCount
+    FROM
+      [Order]
+      JOIN OrderItem ON OrderItem.OrderId = [Order].Id
+    GROUP BY
+      [Order].CustomerId
+  ) AS CustomerIdWithUniqueProductsCount
+ON CustomerIdWithUniqueProductsCount.CustomerId = Customer.Id
+```
+![изображение](https://user-images.githubusercontent.com/125894838/233861110-a39da74f-5573-45b3-a7e6-0caa3acb5533.png)
