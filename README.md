@@ -2,12 +2,12 @@
 Информация о заказах клиентов с декабря 2013 по январь 2014.
 ```
 SELECT
-  [Order].*
+  o.*
 FROM
-  [Order]
-  JOIN Customer ON [Order].CustomerId = Customer.Id
+  [Order] AS o
+  JOIN Customer AS c ON o.CustomerId = c.Id
 WHERE
-  [Order].OrderDate BETWEEN '2013-12-1' AND '2014-2-1';
+  o.OrderDate BETWEEN '2013-12-1' AND '2014-2-1'
 ```
 ![изображение](https://user-images.githubusercontent.com/125894838/232237602-c07104ad-142a-4eb4-9e1a-9223fc395c8c.png)
 
@@ -16,15 +16,15 @@ WHERE
 Информация  о заказах, содержащих продукты из Германии и Италии.
 ```
 SELECT
-  [Order].*,
-  Supplier.Country
+  o.*,
+  s.Country
 FROM
-  [Order]
-  JOIN OrderItem ON OrderItem.OrderId = [Order].Id
-  JOIN Product ON OrderItem.ProductId = Product.Id
-  JOIN Supplier ON Product.SupplierId = Supplier.Id
+  [Order] AS o
+  JOIN OrderItem AS oi ON oi.OrderId = o.Id
+  JOIN Product AS p ON oi.ProductId = p.Id
+  JOIN Supplier AS s ON p.SupplierId = s.Id
 WHERE
-  Supplier.Country IN (N'Germany', N'Italy');
+  s.Country IN (N'Germany', N'Italy')
 ```
 ![изображение](https://user-images.githubusercontent.com/125894838/232237629-dee004ac-1aa9-46bb-aedc-a7854d866f8e.png)
 
@@ -33,14 +33,14 @@ WHERE
 Информация о продуктах, чьё количество в закзе от 50 до 100.
 ```
 SELECT
-  Product.*,
-  OrderItem.Quantity
+  p.*,
+  oi.Quantity
 FROM
-  Product
-  JOIN OrderItem ON OrderItem.ProductId = Product.Id
-  JOIN [Order] ON OrderItem.OrderId = [Order].Id
+  Product AS p
+  JOIN OrderItem AS oi ON oi.ProductId = p.Id
+  JOIN [Order] AS o ON oi.OrderId = o.Id
 WHERE
-  OrderItem.Quantity BETWEEN 50 AND 100;
+  oi.Quantity BETWEEN 50 AND 100;
 ```
 ![изображение](https://user-images.githubusercontent.com/125894838/232237676-78c7c986-7ae6-4016-b713-fbd321aeaf7a.png)
 
@@ -51,12 +51,12 @@ WHERE
 SELECT TOP 10
   *
 FROM
-  Product
-  JOIN Supplier ON Product.SupplierId = Supplier.Id
+  Product AS p
+  JOIN Supplier AS s ON p.SupplierId = s.Id
 WHERE
-  Supplier.Country = N'France'
+  s.Country = N'France'
 ORDER BY
-  Product.UnitPrice;
+  p.UnitPrice;
 ```
 ![изображение](https://user-images.githubusercontent.com/125894838/232237706-49fe4a89-918c-4605-a7fc-02d4ae4658e3.png)
 
@@ -65,23 +65,23 @@ ORDER BY
 Количество продуктов по каждому поставщику. Отсортировать по стране и городу в порядке убывания.
 ```
 SELECT
-  Supplier.*,
-  SupplierIdWithProductsCount.ProductsCount
+  s.*,
+  SupplierProducts.ProductsCount
 FROM
-  Supplier
+  Supplier AS s
   JOIN (
     SELECT
-      Product.SupplierId,
+      p.SupplierId,
       COUNT(*) ProductsCount
     FROM
-      Product
+      Product AS p
     GROUP BY
-      Product.SupplierId
-  ) AS SupplierIdWithProductsCount
-  ON Supplier.Id = SupplierIdWithProductsCount.SupplierId
+      p.SupplierId
+  ) AS SupplierProducts
+  ON s.Id = SupplierProducts.SupplierId
 ORDER BY
-  Supplier.Country DESC,
-  Supplier.City DESC;
+  s.Country DESC,
+  s.City DESC
 ```
 ![изображение](https://user-images.githubusercontent.com/125894838/233708864-be610f6e-b321-4a56-9f51-8150df7d7bf6.png)
 
@@ -90,27 +90,27 @@ ORDER BY
 Первые 3 клиента, у которых заказы с наибольшим (не только максимальным) количеством позиций (вывести фамилию, имя клиента, номера заказов и количество позиций в них).
 ```
 SELECT
-  Customer.LastName,
-  Customer.FirstName,
+  c.LastName,
+  c.FirstName,
   OrderNumber,
   OrderItemsCount
 FROM
-  [Order]
+  [Order] AS o
   JOIN (
     SELECT TOP 3
-      OrderItem.OrderId AS OrderId,
+      oi.OrderId AS OrderId,
       COUNT(*) AS OrderItemsCount
     FROM
-      OrderItem
+      OrderItem AS oi
     GROUP BY
-      OrderItem.OrderId
+      oi.OrderId
     ORDER BY
       OrderItemsCount DESC
-  ) AS OrderNumberWithOrderItemsCount
-  ON [Order].Id = OrderNumberWithOrderItemsCount.OrderId
-  JOIN Customer ON Customer.Id = [Order].CustomerId
+  ) AS OrderOrderItems
+  ON o.Id = OrderOrderItems.OrderId
+  JOIN Customer AS c ON c.Id = o.CustomerId
 ORDER BY
-  OrderNumberWithOrderItemsCount.OrderItemsCount DESC
+  OrderOrderItems.OrderItemsCount DESC
 ```
 ![изображение](https://user-images.githubusercontent.com/125894838/233807437-44a2e314-c2cd-4053-882c-b49a0c12f3ed.png)
 
@@ -119,34 +119,34 @@ ORDER BY
 Всех клиентов, которые работают с минимальным количеством поставщиков, и их заказы.
 ```
 SELECT
-  Customer.*,
-  [Order].*,
-  CustomerIdWithSupliersCount.SuppliersCount
+  c.*,
+  o.*,
+  CustomerSupliers.SuppliersCount
 FROM (
   SELECT
-    [Order].CustomerId,
+    o.CustomerId,
     COUNT(*) AS SuppliersCount
   FROM
-    [Order]
-    JOIN OrderItem ON [Order].Id = OrderItem.OrderId
+    [Order] AS o
+    JOIN OrderItem AS oi ON o.Id = oi.OrderId
   GROUP BY
-    [Order].CustomerId
-) AS CustomerIdWithSupliersCount
-JOIN Customer ON CustomerIdWithSupliersCount.CustomerId = Customer.Id
-JOIN [Order] ON [Order].CustomerId = Customer.Id
+    o.CustomerId
+) AS CustomerSupliers
+JOIN Customer AS c ON c.Id = CustomerSupliers.CustomerId
+JOIN [Order] AS o ON o.CustomerId = c.Id
 WHERE
-  CustomerIdWithSupliersCount.SuppliersCount = (
+  CustomerSupliers.SuppliersCount = (
     SELECT
-      MIN(CustomerSuppliersCount.SuppliersCount) AS MinSupliersCount
+      MIN(CustomerSupliers.SuppliersCount) AS MinSupliersCount
     FROM (
       SELECT
         COUNT(*) AS SuppliersCount
       FROM
-        [Order]
-        JOIN OrderItem ON [Order].Id = OrderItem.OrderId
+        [Order] AS o
+        JOIN OrderItem AS oi ON o.Id = oi.OrderId
       GROUP BY
-        [Order].CustomerId
-    ) AS CustomerSuppliersCount
+        o.CustomerId
+    ) AS CustomerSupliers
   )
 ```
 ![изображение](https://user-images.githubusercontent.com/125894838/233857853-66de6861-3135-43db-aaa6-01afe37967a4.png)
@@ -156,21 +156,70 @@ WHERE
 Количество различных продуктов по каждому клиенту. Вывести фамилию, имя клиента, количество продуктов.
 ```
 SELECT
-  Customer.LastName,
-  Customer.FirstName,
-  CustomerIdWithUniqueProductsCount.UniqueProductsCount
+  c.LastName,
+  c.FirstName,
+  CustomerUniqueProducts.UniqueProductsCount
 FROM
-  Customer
+  Customer AS c
   JOIN (
     SELECT
-      [Order].CustomerId,
-      COUNT(DISTINCT OrderItem.ProductId) AS UniqueProductsCount
+      o.CustomerId,
+      COUNT(DISTINCT oi.ProductId) AS UniqueProductsCount
     FROM
-      [Order]
-      JOIN OrderItem ON OrderItem.OrderId = [Order].Id
+      [Order] AS o
+      JOIN OrderItem AS oi ON oi.OrderId = o.Id
     GROUP BY
-      [Order].CustomerId
-  ) AS CustomerIdWithUniqueProductsCount
-ON CustomerIdWithUniqueProductsCount.CustomerId = Customer.Id
+      o.CustomerId
+  ) AS CustomerUniqueProducts
+ON CustomerUniqueProducts.CustomerId = c.Id
 ```
 ![изображение](https://user-images.githubusercontent.com/125894838/233861110-a39da74f-5573-45b3-a7e6-0caa3acb5533.png)
+
+## Представления
+#### 1 задание
+Количество поставщиков по каждому клиенту. Вывести сведения о клиенте и количество поставщиков.
+```
+CREATE VIEW CustomerSuppliers AS
+  SELECT
+    o.CustomerId,
+    COUNT(DISTINCT SupplierId) UniqueSuppliersCount
+  FROM
+    [Order] AS o
+    JOIN OrderItem AS oi ON oi.OrderId = o.Id
+    JOIN Product AS p ON p.Id = oi.ProductId
+  GROUP BY
+    o.CustomerId
+```
+```
+SELECT
+  c.*,
+  CustomerSuppliers.UniqueSuppliersCount
+FROM
+  Customer AS c
+  JOIN CustomerSuppliers ON CustomerSuppliers.CustomerId = c.Id
+```
+![изображение](https://user-images.githubusercontent.com/125894838/233862497-e5b18172-a8b3-4afb-a954-1ee0203c1e8c.png)
+
+#### 2 задание
+Количество различных продуктов по каждому клиенту. Вывести фамилию, имя клиента, количество продуктов.
+```
+CREATE VIEW CustomerUniqueProducts AS
+  SELECT
+    o.CustomerId,
+    COUNT(DISTINCT oi.ProductId) AS UniqueProductsCount
+  FROM
+    [Order] AS o
+    JOIN OrderItem AS oi ON oi.OrderId = o.Id
+  GROUP BY
+    o.CustomerId
+```
+```
+SELECT
+  c.LastName,
+  c.FirstName,
+  CustomerUniqueProducts.UniqueProductsCount
+FROM
+  Customer AS c
+  JOIN CustomerUniqueProducts ON CustomerUniqueProducts.CustomerId = c.Id
+```
+![изображение](https://user-images.githubusercontent.com/125894838/233863664-0fadf69a-8bdb-4032-a3ac-eb28bc4c3cbf.png)
