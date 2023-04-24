@@ -5,7 +5,6 @@ SELECT
   o.*
 FROM
   [Order] AS o
-  JOIN Customer AS c ON o.CustomerId = c.Id
 WHERE
   o.OrderDate BETWEEN '2013-12-1' AND '2014-2-1'
 ```
